@@ -2,6 +2,11 @@
 from openravepy.misc import InitOpenRAVELogging
 InitOpenRAVELogging()
 
+from PyQt5 import QtGui, QtCore
+import logging
+
+import numpy as np
+
 from openravepy import *
 from openravepy.ikfast import *
 
@@ -11,16 +16,26 @@ def printDHParams():
         print "%d, %s, %d, %f, %f, %f, %f" % (i, p.joint.GetName(), p.parentindex, p.d, p.a, p.theta, p.alpha)
 
 env = Environment()
+# server = Server()
 env.SetViewer('qtcoin')
+# logger = logging.getLogger('PyqtControl')
 urdf_module = RaveCreateModule(env, 'urdf')
 
 urdf_path = "package://inmoov_description/robots/inmoov_shadow_hand_v2.urdf"
 srdf_path = "package://inmoov_description/srdf/inmoov_shadow_hand_v2.srdf"
 
+h = env.plot3([1,0,0],30)
+
 inmoov_name = urdf_module.SendCommand('LoadURI {} {}'.format(urdf_path, srdf_path))
 print('robot name:', inmoov_name)
 robot = env.GetRobots()[0]
 print(robot)
+BaseT = np.array([[1,0,0,0],
+                    [0,1,0,0],
+                    [0,0,1,-1],
+                    [0,0,0,1]])
+robot.SetTransform(BaseT)
+# urdf_module.SendCommand('LoadURI {}'.format("tabletop.urdf"))
 
 printDHParams()
 
