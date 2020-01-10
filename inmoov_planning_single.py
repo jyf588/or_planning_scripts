@@ -9,19 +9,11 @@ from pdb import set_trace as bp
 env = Environment()
 env.SetViewer('qtcoin')
 urdf_module = RaveCreateModule(env, 'urdf')
-
-urdf_path = "package://inmoov_description/robots/inmoov_shadow_hand_v2.urdf"
+urdf_path = "package://inmoov_description/robots/inmoov_shadow_hand_v2_1.urdf"
 srdf_path = "package://inmoov_description/srdf/inmoov_shadow_hand_v2.srdf"
 np.set_printoptions(formatter={'int_kind': '{:,}'.format})
 inmoov_name = urdf_module.SendCommand('LoadURI {} {}'.format(urdf_path, srdf_path))
-print('robot name:', inmoov_name)
 robot = env.GetRobots()[0]
-print(robot)
-# table = env.ReadKinBodyXMLFile('tabletop.kinbody.xml')
-# env.Add(table)
-#baseToPalmOffset = np.array([-0.27157567, 0.37579589,  -1.07620252])
-#palm_init_pos=np.array([-0.17, 0.07, 0.1])
-#baseT_translation = baseToPalmOffset + palm_init_pos
 baseT_translation = np.array([-0.3, 0.5, -1.25])
 BaseT = np.array([[1,0,0,baseT_translation[0]],
                 [0,1,0,baseT_translation[1]],
@@ -33,10 +25,6 @@ robot.SetTransform(BaseT)
            
 table = env.ReadKinBodyXMLFile('tabletop_2.kinbody.xml')
 env.Add(table)
-obs1 = env.ReadKinBodyXMLFile('obs1.kinbody.xml')
-env.Add(obs1)
-target = env.ReadKinBodyXMLFile('target.kinbody.xml')
-env.Add(target)
 
 manip = robot.SetActiveManipulator('right_arm')
 #print(manip.GetArmIndices()) # [ 8  7  9  5  6 33 32] out of 34
@@ -47,20 +35,8 @@ if not ikmodel.load():
 robot.SetDOFValues([0.0]*34,range(34))     # 5*2+2+22
 
 
-
-########## enter object location and orientation in world coordinate frame
-obj_xyz = np.array([0.10, 0.10, 0])
-obj_theta = 45*np.pi/180 #rotation is assumed to be around z-axis
-is_box = True
-Theta_min = 0 # choose interval Theta_min - Theta_max for wrist orientation wrt the object if it is not a box
-Theta_max = 2*np.pi/3
-
-choose = 1 # choose one of those options to plan and execute 
-
-# calculate transformation matrix
-RotMat_w_o = np.array([[np.cos(obj_theta),-np.sin(obj_theta),0,obj_xyz[0]],[np.sin(obj_theta),np.cos(obj_theta),0,obj_xyz[1]],[0,0,1,obj_xyz[2]],[0,0,0,1]]) # calculate rotation matrix
-h = env.plot3(RotMat_w_o[0:3,3],30)
-raw_input('press any key 3')
+# enter one or more initial conditions for the robot configuration
+X0 = [0.0]*34
 # palm pos/orient in object reference frame (use utility file to calculate matrix)
 Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
     -1.80000000e-01],
@@ -71,18 +47,56 @@ Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
     [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
         1.00000000e+00]])
 
+#########################################################################################################################################
+# INPUT: Array with [x,y,z,theta] information in world coordinates for the target object and obstacles. Target object should be entered in the first column. Also, is_box Boolean indicates whether target object is box or not.
+# enter obstacles location and orientation in world coordinate frame
+INPUT = np.array([[0.1, 0.1, 0.0, 45*np.pi/180],  
+                [0.0,-0.2, 0.0, 0*np.pi/180],   
+                [0.4, 0.3, 0.0, 0*np.pi/180]])
+is_box = True
+
+
+
+Theta_min = -30*np.pi/180 # choose interval Theta_min - Theta_max for wrist orientation wrt the object if it is not a box
+Theta_max = 90*np.pi/180
+choose = 1 # choose which one to plan
+
+
+# Calculate transformation matrices for obstacles and target object
+def get_transf_mat_from_pos_orient(xyz,theta):
+    return np.array([[np.cos(theta),-np.sin(theta),0,xyz[0]],[np.sin(theta),np.cos(theta),0,xyz[1]],[0,0,1,xyz[2]],[0,0,0,1]])   
+Tobj = []
+for i in range(INPUT.shape[0]):
+    xyz = INPUT[i,0:3]
+    theta = INPUT[i,-1]
+    Tobj.append(get_transf_mat_from_pos_orient(xyz,theta))
 
 if is_box:
-   Theta = np.array([-np.pi/2,0,np.pi/2])
+        Theta = np.array([-np.pi/2,0,np.pi/2])
+        num_processes = 3
 else:
-    Theta = np.linspace(Theta_min,Theta_max,num=3)  # choose a few wrist orientations in the interval 0 to 90
-
+    Theta = np.linspace(0,2*np.pi/3,num=num_processes)  # choose a few wrist orientations in the interval 0 to 90
 print 'Wrist rotation angles in deg: ' , Theta*180/np.pi
 Tgoal=[]
 for theta in Theta:
-        RotMat = np.array([[np.cos(theta),-np.sin(theta),0,0],[np.sin(theta),np.cos(theta),0,0],[0,0,1,0],[0,0,0,1]]) # calculate rotation matrix
-        Apo_varried = np.matmul(RotMat,Apo) # get varied Apo
-        Tgoal.append(np.matmul(RotMat_w_o,Apo_varried)) # transform to world coordinate frame
+    Trans = get_transf_mat_from_pos_orient(np.array([0,0,0]),theta) # calculate transformation matrix for varied palm orientations
+    Apo_varried = np.matmul(Trans,Apo) # get varied Apo
+    Tgoal.append(np.matmul(Tobj[0],Apo_varried)) # transform to world coordinate frame   
+
+for i in range(len(Tobj)):
+    if i == 0:
+        target = env.ReadKinBodyXMLFile('target.kinbody.xml')
+        env.Add(target)
+        target.SetTransform(Tobj[i])
+    else:
+        kinbody = 'obs%s.kinbody.xml' % i
+        exec "obs%s=env.ReadKinBodyXMLFile(kinbody)" % i
+        exec "env.Add(obs%s)" % i
+        exec "obs%s.SetTransform(Tobj[i])" % i
+
+h = env.plot3(Tobj[0][0:3,3],30)
+raw_input('press any key 3')
+
 
         
 h = env.plot3(Tgoal[choose][0:3,3],30)

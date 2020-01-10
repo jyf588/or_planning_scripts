@@ -1,11 +1,10 @@
 <KinBody name="obs1">
   <Body name="base">
     <Geom type="box">
-      <extents>0.1 0.1 0.1</extents>
+      <extents>0.05 0.05 0.05</extents>
       <!-- offset [-0.44157567,  0.44579589, -1.07620252] -->
       <!-- offset [0.44157567 + 0.1,  -0.44579589, 1.07620252 - 0.05] -->
-      <!-- <translation> 0.54157567  -0.44579589 1.02620252</translation> -->
-      <translation> 0.0 -0.2 0.0 </translation>
+      <translation> 0  0 0.025 </translation>
       <diffusecolor>0.8 0.5 0.5</diffusecolor>
     </Geom>
   </Body>

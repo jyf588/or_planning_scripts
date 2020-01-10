@@ -21,20 +21,18 @@ def child_process(conn):
     # Receive the initialization data
     initialization_data = conn.recv()
     #print('Initialization data: ', initialization_data)
-        
+    Tobj = initialization_data[1]
+
     # Initialize stuff using the data from the main program, e.g. create client
     env = Environment()
-    #env.SetViewer('qtcoin')
+    env.SetViewer('qtcoin')  #comment out if not using visualization!
     urdf_module = RaveCreateModule(env, 'urdf')
-    urdf_path = "package://inmoov_description/robots/inmoov_shadow_hand_v2.urdf"
+    urdf_path = "package://inmoov_description/robots/inmoov_shadow_hand_v2_1.urdf"
     srdf_path = "package://inmoov_description/srdf/inmoov_shadow_hand_v2.srdf"
     inmoov_name = urdf_module.SendCommand('LoadURI {} {}'.format(urdf_path, srdf_path))
     #print('robot name:', inmoov_name)
     robot = env.GetRobots()[0]
     #print(robot)
-    #baseToPalmOffset = np.array([-0.27157567, 0.37579589,  -1.07620252])
-    #palm_init_pos=np.array([-0.17, 0.07, 0.1])
-    #baseT_translation = baseToPalmOffset + palm_init_pos
     baseT_translation = np.array([-0.3, 0.5, -1.25])
     BaseT = np.array([[1,0,0,baseT_translation[0]],
                 [0,1,0,baseT_translation[1]],
@@ -43,7 +41,18 @@ def child_process(conn):
     robot.SetTransform(BaseT)
     
     table = env.ReadKinBodyXMLFile('tabletop_2.kinbody.xml')
-    env.Add(table) 
+    env.Add(table)
+    for i in range(len(Tobj)):
+        if i == 0:
+            target = env.ReadKinBodyXMLFile('target.kinbody.xml')
+            env.Add(target)
+            target.SetTransform(Tobj[i])
+        else:
+            kinbody = 'obs%s.kinbody.xml' % i
+            exec "obs%s=env.ReadKinBodyXMLFile(kinbody)" % i
+            exec "env.Add(obs%s)" % i
+            exec "obs%s.SetTransform(Tobj[i])" % i
+
 
     manip = robot.SetActiveManipulator('right_arm')
     #RaveSetDebugLevel(DebugLevel.Debug) # set output level to debug
@@ -61,7 +70,7 @@ def child_process(conn):
             robot.SetDOFValues(command_and_args[1],range(34))   
             Tgoal = command_and_args[2]
             try:
-                res = manipprob.MoveToHandPosition(matrices=[Tgoal],seedik=10,outputtrajobj=True,execute=False)
+                res = manipprob.MoveToHandPosition(matrices=[Tgoal],seedik=10,outputtrajobj=True)#,execute=False)
                 traj = res.GetAllWaypoints2D()[:,0:-1]
                 J = np.linalg.norm(traj[-1,0:7]) #fitness function is the norm of the q's at the final state.    
             except:
@@ -84,22 +93,8 @@ if __name__ == '__main__':
     num_processes = 5# number of parallel processes to use
 
     print('main program process id:', os.getpid())
-    
     # enter one or more initial conditions for the robot configuration
     X0 = [0.0]*34
-
-    
-    ########## enter object location and orientation in world coordinate frame
-    obj_xyz = np.array([0.10, 0.10, 0])
-    obj_theta = 45*np.pi/180 #rotation is assumed to be around z-axis
-    is_box = True
-    Theta_min = 0 # choose interval Theta_min - Theta_max for wrist orientation wrt the object if it is not a box
-    Theta_max = 2*np.pi/3
-
-
-    
-    # calculate transformation matrix
-    RotMat_w_o = np.array([[np.cos(obj_theta),-np.sin(obj_theta),0,obj_xyz[0]],[np.sin(obj_theta),np.cos(obj_theta),0,obj_xyz[1]],[0,0,1,obj_xyz[2]],[0,0,0,1]]) # calculate rotation matrix
     # palm pos/orient in object reference frame (use utility file to calculate matrix)
     Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
         -1.80000000e-01],
@@ -109,21 +104,41 @@ if __name__ == '__main__':
          1.30000000e-01],
        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
          1.00000000e+00]])
+    #########################################################################################################################################
+    # INPUT: Array with [x,y,z,theta] information in world coordinates for the target object and obstacles. Target object should be entered in the first column. Also, is_box Boolean indicates whether target object is box or not.
+    # enter obstacles location and orientation in world coordinate frame
+    INPUT = np.array([[0.1, 0.1, 0.0, 45*np.pi/180],  
+                [0.0,-0.2, 0.0, 0*np.pi/180],   
+                [0.4, 0.3, 0.0, 0*np.pi/180],
+                [0.0, 0.3, 0.0, 0*np.pi/180]])
+    is_box = False
+    Theta_min = -30*np.pi/180 # choose interval Theta_min - Theta_max for wrist orientation wrt the object if it is not a box
+    Theta_max = 90*np.pi/180
+
+
+    # Calculate transformation matrices for obstacles and target object
+    def get_transf_mat_from_pos_orient(xyz,theta):
+        return np.array([[np.cos(theta),-np.sin(theta),0,xyz[0]],[np.sin(theta),np.cos(theta),0,xyz[1]],[0,0,1,xyz[2]],[0,0,0,1]])   
+    Tobj = []
+    for i in range(INPUT.shape[0]):
+        xyz = INPUT[i,0:3]
+        theta = INPUT[i,-1]
+        Tobj.append(get_transf_mat_from_pos_orient(xyz,theta))
     
+    # Calculate transformation matrices for wrist target locations
     if is_box:
-         Theta = np.array([-np.pi/2,0,np.pi/2])
-         num_processes = 3
+        Theta = np.array([-np.pi/2,0,np.pi/2])
+        num_processes = 3
     else:
         Theta = np.linspace(0,2*np.pi/3,num=num_processes)  # choose a few wrist orientations in the interval 0 to 90
     print 'Wrist rotation angles in deg: ' , Theta*180/np.pi
     Tgoal=[]
     for theta in Theta:
-        RotMat = np.array([[np.cos(theta),-np.sin(theta),0,0],[np.sin(theta),np.cos(theta),0,0],[0,0,1,0],[0,0,0,1]]) # calculate rotation matrix
-        Apo_varried = np.matmul(RotMat,Apo) # get varied Apo
-        Tgoal.append(np.matmul(RotMat_w_o,Apo_varried)) # transform to world coordinate frame   
-        
-    #---------- Setup other stuff, client for real world, etc
-    # Setup and store all processes
+        Trans = get_transf_mat_from_pos_orient(np.array([0,0,0]),theta) # calculate transformation matrix for varied palm orientations
+        Apo_varried = np.matmul(Trans,Apo) # get varied Apo
+        Tgoal.append(np.matmul(Tobj[0],Apo_varried)) # transform to world coordinate frame   
+
+    # Begin Processes
     #bp()
     processes = []
     for i in range(num_processes):
@@ -135,7 +150,7 @@ if __name__ == '__main__':
         # Start the process
         p.start()
         # Send the initial arguments for initialization
-        parent_conn.send([i, 'something else'])
+        parent_conn.send([i,Tobj])
 
     
 
@@ -154,9 +169,9 @@ if __name__ == '__main__':
     end_time = time.time()
     print("Duration: %.2f sec" % (end_time-start_time))
 
-
+    bp() 
     for i in range(num_processes):
         Js_i = processes[i][1].send(["stop"])
         processes[i][0].join()        
 
-    bp()    
+    OptTraj = Traj[np.argmin(Cost)]   
