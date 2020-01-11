@@ -130,7 +130,7 @@ if __name__ == '__main__':
         Theta = np.array([-np.pi/2,0,np.pi/2])
         num_processes = 3
     else:
-        Theta = np.linspace(0,2*np.pi/3,num=num_processes)  # choose a few wrist orientations in the interval 0 to 90
+        Theta = np.linspace(Theta_min,Theta_max,num=num_processes)  # choose a few wrist orientations in the interval 0 to 90
     print 'Wrist rotation angles in deg: ' , Theta*180/np.pi
     Tgoal=[]
     for theta in Theta:
