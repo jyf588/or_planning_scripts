@@ -51,7 +51,7 @@ Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
 
 #########################################################################################################################################
 # listen for file and open it when it appears
-file_path = 'PB_PLAN.npy'
+file_path = '/data/PB_PLAN.npy'
 while not os.path.exists(file_path):
     time.sleep(1)
 if os.path.isfile(file_path):
@@ -64,7 +64,7 @@ else:
 # INPUT: Array with [x,y,z,theta] information in world coordinates for the target object and obstacles. Target object should be entered in the first column. Also, is_box Boolean indicates whether target object is box or not.
 # enter obstacles location and orientation in world coordinate frame
 INPUT = np.array([[0.18, -0.18, 0.0, 0*np.pi/180],  
-                [0.0,-0.2, 0.0, 0*np.pi/180],   
+                #pwd[0.0,-0.2, 0.0, 0*np.pi/180],   
                 [0.4, 0.3, 0.0, 0*np.pi/180],
                 [0.0, 0.3, 0.0, 0*np.pi/180]])
 
@@ -108,5 +108,5 @@ end_time = time.time()
 print("Duration: %.2f sec" % (end_time-start_time))
 
 
-np.save('OR_REACH.npy',traj)
+np.save('/data/OR_REACH.npy',traj)
 bp()
