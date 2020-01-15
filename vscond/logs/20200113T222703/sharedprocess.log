@@ -1,8 +1,0 @@
-[2020-01-13 22:27:06.936] [sharedprocess] [info] main {"machineId":"e40f1a22-d0fb-45b3-a04f-f5efa7640488","windowId":2}
-[2020-01-13 22:27:08.157] [sharedprocess] [info] Installing extension: ms-python.python
-[2020-01-13 22:27:09.483] [sharedprocess] [info] Downloaded extension: ms-python.python /tmp/f2ff92ae-d4d5-4d64-9092-7a39d2d1ac50
-[2020-01-13 22:27:11.062] [sharedprocess] [info] Extracted extension to /root/.vscode/extensions/.ms-python.python-2020.1.58038: ms-python.python
-[2020-01-13 22:27:11.062] [sharedprocess] [info] Renamed to /root/.vscode/extensions/ms-python.python-2020.1.58038
-[2020-01-13 22:27:11.065] [sharedprocess] [info] Installation completed. ms-python.python
-[2020-01-13 22:27:11.080] [sharedprocess] [info] Extensions installed successfully: ms-python.python
-[2020-01-13 22:27:46.922] [sharedprocess] [info] Starting to clean up unused language packs.
