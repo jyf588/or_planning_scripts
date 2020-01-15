@@ -1,0 +1,9 @@
+[2020-01-15 18:53:59.877] [renderer1] [error] Error: Unable to read file (Error: File not found (/root/or_planning_scripts/input.csv))
+    at Object.t.createErrorWithActions (file:///usr/share/code/resources/app/out/vs/workbench/workbench.desktop.main.js:58:379)
+    at w.handleSetInputError (file:///usr/share/code/resources/app/out/vs/workbench/workbench.desktop.main.js:4837:647)
+    at w.handleSetInputError (file:///usr/share/code/resources/app/out/vs/workbench/workbench.desktop.main.js:4840:376)
+    at w.setInput (file:///usr/share/code/resources/app/out/vs/workbench/workbench.desktop.main.js:4837:358)
+[2020-01-15 19:44:18.844] [renderer1] [error] Error: [File Watcher (node.js)] Error: ENOENT: no such file or directory, stat '/root/or_planning_scripts/input.csv'
+[2020-01-15 19:44:18.844] [renderer1] [error] [File Watcher (node.js)] Error: ENOENT: no such file or directory, stat '/root/or_planning_scripts/input.csv'
+[2020-01-15 19:44:36.360] [renderer1] [error] Error: [File Watcher (node.js)] Error: ENOENT: no such file or directory, stat '/root/or_planning_scripts/input.csv'
+[2020-01-15 19:44:36.361] [renderer1] [error] [File Watcher (node.js)] Error: ENOENT: no such file or directory, stat '/root/or_planning_scripts/input.csv'
