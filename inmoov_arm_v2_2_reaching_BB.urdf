@@ -93,6 +93,12 @@
         <color rgba="0.75 0.75 0.75 1.0"/>
       </material>
     </visual>
+    <collision>
+      <geometry>
+        <box size="0.06 0.06 0.2"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.03 -0.00 -0.18"/>
+    </collision>
     <inertial>
       <mass value="401.76659375"/>
       <inertia ixx="3.242307584" ixy="0.050011216" ixz="-0.14318512" iyy="3.24251008" iyz="0.086288976" izz="0.58458784"/>
@@ -100,14 +106,14 @@
   </link>
   <joint name="r_shoulder_out_joint" type="revolute">
     <axis xyz="1 0 0"/>
-    <limit effort="1000.0" lower="-1.57079632679" upper="1.57079632679" velocity="1745.32925199"/>
+    <limit effort="1000.0" lower="-2.07079632679" upper="1.57079632679" velocity="1745.32925199"/>
     <origin rpy="0 0 0" xyz="0 -0.066 -0.06"/>
     <parent link="r_shoulder_link"/>
     <child link="r_bicep_link_aux_0"/>
   </joint>
   <joint name="r_shoulder_lift_joint" type="revolute">
     <axis xyz="0 1 0"/>
-    <limit effort="1000.0" lower="-1.57079632679" upper="1.57079632679" velocity="1745.32925199"/>
+    <limit effort="1000.0" lower="-2.07079632679" upper="1.57079632679" velocity="1745.32925199"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="r_bicep_link_aux_0"/>
     <child link="r_bicep_link_aux_1"/>

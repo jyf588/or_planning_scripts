@@ -20,7 +20,7 @@ from scipy.interpolate import interp1d
 
 
 env = Environment()
-#env.SetViewer('qtcoin')
+# env.SetViewer('qtcoin')
 urdf_module = RaveCreateModule(env, 'urdf')
 urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_reaching_BB.urdf"
 #urdf_path = "package://inmoov_description/robots/inmoov_shadow_hand_v2_1.urdf"
@@ -38,7 +38,7 @@ robot.SetTransform(BaseT)
 
            
 table = env.ReadKinBodyXMLFile('tabletop_2.kinbody.xml')
-env.Add(table)
+env.Add(table)      # TODO: moved table down 3cm
 
 manip = robot.SetActiveManipulator('right_arm')
 #print(manip.GetArmIndices()) # [ 3  2  4  0  1 6 5] out of 7
@@ -65,7 +65,7 @@ Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
 # listen for file and open it when it appears
 file_path = '/data/PB_MOVE.npz'
 while not os.path.exists(file_path):
-    time.sleep(1)
+    time.sleep(0.01)
 if os.path.isfile(file_path):
     loaded_data = np.load(file_path)
     OBJECTS = loaded_data['arr_0']
@@ -94,15 +94,16 @@ for i in range(1,OBJECTS.shape[0]):
     theta = OBJECTS[i,-1]
     Tobj.append(get_transf_mat_from_pos_orient(xyz,theta))
 
-
-for i in range(1,len(Tobj)):
-        kinbody = 'obs%s.kinbody.xml' % i
+print(Tobj)
+for i in range(0,len(Tobj)):      # TODO: re-write this
+        kinbody = 'obs%s.kinbody.xml' % (i+1)
         exec "obs%s=env.ReadKinBodyXMLFile(kinbody)" % i
         exec "env.Add(obs%s)" % i
         exec "obs%s.SetTransform(Tobj[i])" % i
+        print("aaa")
 
 #h = env.plot3(Tobj[0][0:3,3],30)
-#raw_input('press any key 3')
+# raw_input('press any key 3')
 
 
         
@@ -128,6 +129,8 @@ for i in range(traj.shape[1]-8):
 
 np.save('/data/OR_MOVE.npy',Traj_I)
 #bp()
+
+# raw_input('press any key 4')
 
 # keep rerunning this script until it's terminated from the terminal
 import sys
