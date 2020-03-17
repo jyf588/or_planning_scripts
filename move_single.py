@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 env = Environment()
 # env.SetViewer('qtcoin')
 urdf_module = RaveCreateModule(env, 'urdf')
-urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_reaching_BB.urdf"
+urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_moving_BB.urdf"
 #urdf_path = "package://inmoov_description/robots/inmoov_shadow_hand_v2_1.urdf"
 srdf_path = "package://inmoov_description/srdf/inmoov_shadow_hand_v2.srdf"
 np.set_printoptions(formatter={'int_kind': '{:,}'.format})
@@ -65,7 +65,7 @@ Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
 # listen for file and open it when it appears
 file_path = '/data/PB_MOVE.npz'
 while not os.path.exists(file_path):
-    time.sleep(0.01)
+    time.sleep(0.2)
 if os.path.isfile(file_path):
     loaded_data = np.load(file_path)
     OBJECTS = loaded_data['arr_0']
