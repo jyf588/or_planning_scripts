@@ -96,7 +96,7 @@
     </visual>
     <collision>
       <geometry>
-        <box size="0.08 0.08 0.22"/>
+        <box size="0.04 0.04 0.22"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.03 -0.00 -0.18"/>
     </collision>
@@ -236,16 +236,16 @@
     </inertial>
     <visual>
       <geometry>
-        <box size="0.08 0.08 0.15"/>
+        <box size="0.10 0.10 0.18"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0.00 -0.008 0.08"/>
+      <origin rpy="0 0 0" xyz="0.02 -0.03 0.1"/>
       <material name="black"/>
     </visual>
     <collision>
       <geometry>
-        <box size="0.08 0.08 0.15"/>
+        <box size="0.10 0.10 0.18"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0.00 -0.008 0.08"/>
+      <origin rpy="0 0 0" xyz="0.02 -0.03 0.1"/>
     </collision>
   </link>
   <joint name="rh_WRJ1" type="revolute">
