@@ -122,22 +122,26 @@ for i in range(0,len(Tobj)):        # TODO: <=6 objs
 start_time = time.time()
 
 manipprob = interfaces.BaseManipulation(robot) # create the interface for basic manipulation programs
+
 try:
     res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
-except:
+except PlanningError as e:
+    print(e)
     traj = []
 end_time = time.time()
 print("Duration: %.2f sec" % (end_time-start_time))
 
-
-n = 200 #interpolated trajectory resolution
-t = np.cumsum(traj[:,-1])
-T = np.linspace(t[0],t[-1],n)
-Traj_I = np.zeros((n,traj.shape[1]-8))
-for i in range(traj.shape[1]-8):
-    f = interp1d(t,traj[:,i],kind='linear')
-    Traj_I[:,i] = f(T)
+if len(traj) == 0:
+    Traj_I = np.array([])
+else:
+    n = 200 #interpolated trajectory resolution
+    t = np.cumsum(traj[:,-1])
+    T = np.linspace(t[0],t[-1],n)
+    Traj_I = np.zeros((n,traj.shape[1]-8))
+    for i in range(traj.shape[1]-8):
+        f = interp1d(t,traj[:,i],kind='linear')
+        Traj_I[:,i] = f(T)
 
 save_path = '/data/OR_MOVE.npy' if IS_MOVE else '/data/OR_REACH.npy'
 np.save(save_path,Traj_I)
