@@ -47,9 +47,9 @@ else:
 manip = robot.SetActiveManipulator('right_arm')
 #print(manip.GetArmIndices()) # [ 3  2  4  0  1 6 5] out of 7
 RaveSetDebugLevel(DebugLevel.Debug) # set output level to debug
-ikmodel = databases.inversekinematics.InverseKinematicsModel(robot,iktype=IkParameterization.Type.Transform6D)
-if not ikmodel.load():
-    ikmodel.autogenerate()
+# ikmodel = databases.inversekinematics.InverseKinematicsModel(robot,iktype=IkParameterization.Type.Transform6D)
+# if not ikmodel.load():
+#     ikmodel.autogenerate()
 
 # palm pos/orient in object reference frame (use utility file to calculate matrix)
 Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
@@ -94,7 +94,7 @@ robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
 def get_transf_mat_from_pos_orient(xyz,theta):
     return np.array([[np.cos(theta),-np.sin(theta),0,xyz[0]],[np.sin(theta),np.cos(theta),0,xyz[1]],[0,0,1,xyz[2]],[0,0,0,1]])   
 Tobj = []
-start = 1 if IS_MOVE else 0
+start = 1
 for i in range(start,OBJECTS.shape[0]):
     xyz = OBJECTS[i,0:3]
     theta = OBJECTS[i,-1]
@@ -138,7 +138,7 @@ else:
     n = 200 #interpolated trajectory resolution
     t = np.cumsum(traj[:,-1])
     T = np.linspace(t[0],t[-1],n)
-    Traj_I = np.zeros((n,traj.shape[1]-8))
+    Traj_I = np.zeros((n,traj.shape[1]-8))      # TODO
     for i in range(traj.shape[1]-8):
         f = interp1d(t,traj[:,i],kind='linear')
         Traj_I[:,i] = f(T)
