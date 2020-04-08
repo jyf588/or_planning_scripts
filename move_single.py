@@ -66,7 +66,7 @@ Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
 file_path = '/data/PB_MOVE.npz' if IS_MOVE else '/data/PB_REACH.npz'
 
 while not os.path.exists(file_path):
-    time.sleep(0.2)                 # TODO
+    time.sleep(0.5)                 # TODO
 if os.path.isfile(file_path):
     loaded_data = np.load(file_path)
     OBJECTS = loaded_data['arr_0']
@@ -94,7 +94,7 @@ robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
 def get_transf_mat_from_pos_orient(xyz,theta):
     return np.array([[np.cos(theta),-np.sin(theta),0,xyz[0]],[np.sin(theta),np.cos(theta),0,xyz[1]],[0,0,1,xyz[2]],[0,0,0,1]])   
 Tobj = []
-start = 1
+start = 1 if IS_MOVE else 0
 for i in range(start,OBJECTS.shape[0]):
     xyz = OBJECTS[i,0:3]
     theta = OBJECTS[i,-1]
