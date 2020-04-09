@@ -65,18 +65,22 @@ Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
 # listen for file and open it when it appears
 file_path = '/data/PB_MOVE.npz' if IS_MOVE else '/data/PB_REACH.npz'
 
+Qinit = [0.0]*7
+Qdestin = [0.0]*7
 while not os.path.exists(file_path):
     time.sleep(0.5)                 # TODO
 if os.path.isfile(file_path):
-    loaded_data = np.load(file_path)
-    OBJECTS = loaded_data['arr_0']
-    if IS_MOVE:
-        Qinit = loaded_data['arr_1']
-        Qdestin = loaded_data['arr_2']
-    else:
-        Qinit = [0.0]*7
-        Qdestin = loaded_data['arr_1']
-    os.remove(file_path)
+    try:
+        loaded_data = np.load(file_path)
+        OBJECTS = loaded_data['arr_0']
+        if IS_MOVE:
+            Qinit = loaded_data['arr_1']
+            Qdestin = loaded_data['arr_2']
+        else:
+            Qdestin = loaded_data['arr_1']
+        os.remove(file_path)
+    except Exception:
+        os.remove(file_path)
 else:
     raise ValueError("%s isn't a file!" % file_path)
 
@@ -126,6 +130,8 @@ manipprob = interfaces.BaseManipulation(robot) # create the interface for basic 
 try:
     res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
+    time.sleep(1.0)     # to visualize the openrave traj
+    # raw_input('press any key 4')
 except PlanningError as e:
     print(e)
     traj = []
@@ -135,7 +141,7 @@ print("Duration: %.2f sec" % (end_time-start_time))
 if len(traj) == 0:
     Traj_I = np.array([])
 else:
-    n = 200 #interpolated trajectory resolution
+    n = 400 #interpolated trajectory resolution
     t = np.cumsum(traj[:,-1])
     T = np.linspace(t[0],t[-1],n)
     Traj_I = np.zeros((n,traj.shape[1]-8))      # TODO
