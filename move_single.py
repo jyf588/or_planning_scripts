@@ -17,9 +17,7 @@ print(IS_MOVE)
 env = Environment()
 # env.SetViewer('qtcoin')
 urdf_module = RaveCreateModule(env, 'urdf')
-# TODO: for now, reaching urdf does not have forearm collision
-# turn this on when having multi-cand/no collision reach pose.
-# also smaller BB compared to move.urdf
+
 if IS_MOVE:
     urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_moving_BB.urdf"
 else:
@@ -41,7 +39,7 @@ if IS_MOVE:
     env.Add(table)      # TODO: moved table down several cm
 else:
     table = env.ReadKinBodyXMLFile('tabletop_reach.kinbody.xml')
-    env.Add(table)      # TODO: moved table down 1 cm, move -x 4cm
+    env.Add(table)      # TODO: moved table down 2 cm, move -x 2cm
 
 
 manip = robot.SetActiveManipulator('right_arm')
@@ -68,8 +66,9 @@ file_path = '/data/PB_MOVE.npz' if IS_MOVE else '/data/PB_REACH.npz'
 Qinit = [0.0]*7
 Qdestin = [0.0]*7
 while not os.path.exists(file_path):
-    time.sleep(0.5)                 # TODO
+    time.sleep(0.02)
 if os.path.isfile(file_path):
+    time.sleep(0.3)         # TODO: wait for networking
     try:
         loaded_data = np.load(file_path)
         OBJECTS = loaded_data['arr_0']
@@ -128,9 +127,9 @@ start_time = time.time()
 manipprob = interfaces.BaseManipulation(robot) # create the interface for basic manipulation programs
 
 try:
-    res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True) # call motion planner
+    res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, execute=False) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
-    time.sleep(1.0)     # to visualize the openrave traj
+    spec = res.GetConfigurationSpecification()
     # raw_input('press any key 4')
 except PlanningError as e:
     print(e)
@@ -140,17 +139,31 @@ print("Duration: %.2f sec" % (end_time-start_time))
 
 if len(traj) == 0:
     Traj_I = np.array([])
+    Traj_S = np.array([])
 else:
     n = 400 #interpolated trajectory resolution
     t = np.cumsum(traj[:,-1])
     T = np.linspace(t[0],t[-1],n)
     Traj_I = np.zeros((n,traj.shape[1]-8))      # TODO
+    Traj_S = np.zeros((n,traj.shape[1]-8))      # TODO
     for i in range(traj.shape[1]-8):
         f = interp1d(t,traj[:,i],kind='linear')
         Traj_I[:,i] = f(T)
+    
+    idx = 0
+    for ts in T:
+        with env:
+            trajdata = res.Sample(ts)
+            Traj_S[idx, :] = spec.ExtractJointValues(trajdata,robot,[3, 2, 4, 0, 1, 6, 5],0)
+            idx += 1
 
-save_path = '/data/OR_MOVE.npy' if IS_MOVE else '/data/OR_REACH.npy'
-np.save(save_path,Traj_I)
+# for test in [0,1,2,3,4,10]:
+#     print(Traj_I[test, :])
+#     print(Traj_S[test, :])
+#     print(T[test])
+
+save_path = '/data/OR_MOVE.npz' if IS_MOVE else '/data/OR_REACH.npz'
+np.savez(save_path, Traj_I, Traj_S)
 #bp()
 
 # raw_input('press any key 4')

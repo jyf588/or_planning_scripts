@@ -2,7 +2,7 @@
   <Body name="base">
     <Geom type="box">
       <extents>0.3 0.6 0.05</extents>
-      <translation>0.0 0.2 -0.07</translation>
+      <translation>0.08 0.2 -0.07</translation>
       <diffusecolor>0.6 0 0</diffusecolor>
     </Geom>
   </Body>

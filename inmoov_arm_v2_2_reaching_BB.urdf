@@ -106,35 +106,35 @@
 
   <joint name="r_shoulder_out_joint" type="revolute">
     <axis xyz="1 0 0"/>
-    <limit effort="1000.0" lower="-2.07079632679" upper="1.57079632679" velocity="1745.32925199"/>
+    <limit effort="1000.0" lower="-2.07079632679" upper="1.57079632679" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 -0.066 -0.06"/>
     <parent link="r_shoulder_link"/>
     <child link="r_bicep_link_aux_0"/>
   </joint>
   <joint name="r_shoulder_lift_joint" type="revolute">
     <axis xyz="0 1 0"/>
-    <limit effort="1000.0" lower="-2.07079632679" upper="1.57079632679" velocity="1745.32925199"/>
+    <limit effort="1000.0" lower="-2.07079632679" upper="1.57079632679" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="r_bicep_link_aux_0"/>
     <child link="r_bicep_link_aux_1"/>
   </joint>
   <joint name="r_upper_arm_roll_joint" type="revolute">
     <axis xyz="0 0 1"/>
-    <limit effort="1000.0" lower="-1.57079632679" upper="1.57079632679" velocity="1745.32925199"/>
+    <limit effort="1000.0" lower="-1.57079632679" upper="1.57079632679" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="r_bicep_link_aux_1"/>
     <child link="r_bicep_link"/>
   </joint>
   <joint name="r_elbow_flex_joint" type="revolute">
     <axis xyz="0 1 0"/>
-    <limit effort="1000.0" lower="-3.14159265359" upper="0.0" velocity="1745.32925199"/>
+    <limit effort="1000.0" lower="-3.14159265359" upper="0.0" velocity="1"/>
     <origin rpy="0 0 0" xyz="-0.054 -0.009 -0.2621"/>
     <parent link="r_bicep_link"/>
     <child link="r_forearm_link_aux"/>
   </joint>
   <joint name="r_elbow_roll_joint" type="revolute">
     <axis xyz="0 0 1"/>
-    <limit effort="1000.0" lower="-1.57079632679" upper="1.57079632679" velocity="1745.32925199"/>
+    <limit effort="1000.0" lower="-1.57079632679" upper="1.57079632679" velocity="1"/>
     <origin rpy="0 0 0" xyz="0.0 0 0.0"/>
     <parent link="r_forearm_link_aux"/>
     <child link="r_forearm_link"/>
@@ -208,7 +208,7 @@
     <origin rpy="0 0 0" xyz="0 0.0 0.0"/>
     <!-- this is the wrist adduction -->
     <axis xyz="0 1.0 0"/>
-    <limit effort="10" lower="-1.0471975512" upper="1.0471975512" velocity="20.0"/>
+    <limit effort="10" lower="-1.0471975512" upper="1.0471975512" velocity="1"/>
     <dynamics damping="0.1"/>
   </joint>
   <gazebo reference="rh_WRJ2">
@@ -235,15 +235,15 @@
     <!--    openrave cannot visualize primitive shape e.g. box-->
     <visual>
       <geometry>
-        <mesh filename="package://inmoov_meshes/meshes/box-binary.stl" scale="0.10 0.10 0.18"/>
+        <mesh filename="package://inmoov_meshes/meshes/box-binary.stl" scale="0.11 0.11 0.16"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0.02 -0.03 0.1"/>
+      <origin rpy="-0.35 0 0" xyz="0.01 -0.03 0.08"/>
     </visual>
     <collision>
       <geometry>
-        <box size="0.10 0.10 0.18"/>
+        <box size="0.11 0.11 0.16"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0.02 -0.03 0.1"/>
+      <origin rpy="-0.35 0 0" xyz="0.01 -0.03 0.08"/>
     </collision>
   </link>
   <joint name="rh_WRJ1" type="revolute">
@@ -252,7 +252,7 @@
     <origin rpy="0 0 0" xyz="0 0 0.03"/>
     <axis xyz="1 0 0"/>
     <!-- this is the wrist flexion -->
-    <limit effort="30" lower="-1.57079632679" upper="1.57079632679" velocity="20.0"/>
+    <limit effort="30" lower="-1.57079632679" upper="1.57079632679" velocity="1"/>
     <dynamics damping="0.1"/>
   </joint>
 </robot>
