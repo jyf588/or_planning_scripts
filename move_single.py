@@ -83,7 +83,10 @@ if os.path.isfile(file_path):
 else:
     raise ValueError("%s isn't a file!" % file_path)
 
-robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
+# robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
+
+# Qinit_or = np.array(Qinit)
+# Qinit_or[[3, 2, 4, 0, 1, 6, 5]] = Qinit
 
 # INPUT: Array with [x,y,z,theta] information in world coordinates for the destination location and obstacles. Destination should be entered in the first column. Also, is_box Boolean indicates whether target object is box or not.
 #OBJECTS = np.array([[0.18, -0.18, 0.0, 0*np.pi/180],  
@@ -124,15 +127,26 @@ for i in range(0,len(Tobj)):        # TODO: <=6 objs
         
 start_time = time.time()
 
-manipprob = interfaces.BaseManipulation(robot) # create the interface for basic manipulation programs
+# robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
+# print(robot.GetActiveDOFValues())
 
 try:
-    res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, execute=False) # call motion planner
+    with robot:
+        robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
+        # robot.SetDOFVelocities([0.0]*7,[3, 2, 4, 0, 1, 6, 5])
+        # # robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
+        # robot.SetActiveDOFValues([0.0]*7)
+        # robot.SetActiveDOFVelocities([0.0]*7)
+        manipprob = interfaces.BaseManipulation(robot, maxvelmult=1.0) # create the interface for basic manipulation programs
+        if IS_MOVE:
+            res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, jitter=0.2, execute=True) # call motion planner
+        else:
+            res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, execute=False) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
     spec = res.GetConfigurationSpecification()
     # raw_input('press any key 4')
-except PlanningError as e:
-    print(e)
+except:
+    # print(e)
     traj = []
 end_time = time.time()
 print("Duration: %.2f sec" % (end_time-start_time))
