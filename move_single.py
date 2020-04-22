@@ -11,8 +11,10 @@ from scipy.interpolate import interp1d
 import sys
 
 IS_MOVE = bool(int(sys.argv[1]))    # 0 reach, 1 move
-# print(sys.argv[1]) 
-print(IS_MOVE)
+IS_LARGE_OBS = (len(sys.argv)>2) and bool(sys.argv[2]=="l")
+
+print("is move", IS_MOVE)
+print("is large obstacles", IS_LARGE_OBS) 
 
 env = Environment()
 # env.SetViewer('qtcoin')
@@ -116,7 +118,10 @@ print(Tobj)
 #     print("aaa", i)
 
 for i in range(0,len(Tobj)):        # TODO: <=6 objs
-        kinbody = 'obs%s.kinbody.xml' % i
+        if IS_LARGE_OBS:
+            kinbody = 'obs%s_l.kinbody.xml' % i
+        else:
+            kinbody = 'obs%s.kinbody.xml' % i
         exec "obs%s=env.ReadKinBodyXMLFile(kinbody)" % i
         exec "env.Add(obs%s)" % i
         exec "obs%s.SetTransform(Tobj[i])" % i
@@ -145,7 +150,7 @@ try:
     traj = res.GetAllWaypoints2D()[:,0:-1]
     spec = res.GetConfigurationSpecification()
     # raw_input('press any key 4')
-except:
+except PlanningError:
     # print(e)
     traj = []
 end_time = time.time()
