@@ -38,7 +38,7 @@ robot.SetTransform(BaseT)
 
 if IS_MOVE:
     table = env.ReadKinBodyXMLFile('tabletop_move.kinbody.xml')
-    env.Add(table)      # TODO: moved table down several cm
+    env.Add(table)      # TODO: moved table down 2 cm
 else:
     table = env.ReadKinBodyXMLFile('tabletop_reach.kinbody.xml')
     env.Add(table)      # TODO: moved table down 2 cm, move -x 2cm
