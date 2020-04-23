@@ -1,0 +1,11 @@
+<KinBody name="obs5">
+  <Body name="base">
+    <Geom type="cylinder">
+      <rotationaxis>1 0 0 90</rotationaxis>
+      <radius>0.05</radius>
+      <height>0.2</height>
+      <translation>0  0 0.1</translation>
+      <diffusecolor>0.8 0.5 0.5</diffusecolor>
+    </Geom>
+  </Body>
+</KinBody>

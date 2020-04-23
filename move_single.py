@@ -2,7 +2,6 @@ from openravepy.misc import InitOpenRAVELogging
 InitOpenRAVELogging()
 import time
 from openravepy import *
-from openravepy.ikfast import *
 import numpy as np
 from pdb import set_trace as bp
 import os.path
@@ -47,19 +46,6 @@ else:
 manip = robot.SetActiveManipulator('right_arm')
 #print(manip.GetArmIndices()) # [ 3  2  4  0  1 6 5] out of 7
 RaveSetDebugLevel(DebugLevel.Debug) # set output level to debug
-# ikmodel = databases.inversekinematics.InverseKinematicsModel(robot,iktype=IkParameterization.Type.Transform6D)
-# if not ikmodel.load():
-#     ikmodel.autogenerate()
-
-# palm pos/orient in object reference frame (use utility file to calculate matrix)
-Apo = np.array([[ 7.96326711e-04, -9.73847322e-01,  2.27202023e-01,
-    -1.80000000e-01],
-    [ 0.00000000e+00, -2.27202095e-01, -9.73847631e-01,
-        1.05000000e-01],
-    [ 9.99999683e-01,  7.75500881e-04, -1.80927097e-04,
-        1.30000000e-01],
-    [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
-        1.00000000e+00]])
 
 #########################################################################################################################################
 # listen for file and open it when it appears
@@ -85,18 +71,6 @@ if os.path.isfile(file_path):
 else:
     raise ValueError("%s isn't a file!" % file_path)
 
-# robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
-
-# Qinit_or = np.array(Qinit)
-# Qinit_or[[3, 2, 4, 0, 1, 6, 5]] = Qinit
-
-# INPUT: Array with [x,y,z,theta] information in world coordinates for the destination location and obstacles. Destination should be entered in the first column. Also, is_box Boolean indicates whether target object is box or not.
-#OBJECTS = np.array([[0.18, -0.18, 0.0, 0*np.pi/180],  
-#                [0.0,-0.2, 0.0, 0*np.pi/180],   
-#                [0.4, 0.3, 0.0, 0*np.pi/180],
-#                [0.0, 0.3, 0.0, 0*np.pi/180]])
-
-
 
 # Calculate transformation matrices for obstacles and target object
 def get_transf_mat_from_pos_orient(xyz,theta):
@@ -109,13 +83,6 @@ for i in range(start,OBJECTS.shape[0]):
     Tobj.append(get_transf_mat_from_pos_orient(xyz,theta))
 
 print(Tobj)
-# obs = []
-# filename = "obs.kinbody.xml"
-# for i in range(0,len(Tobj)): 
-#     obs.append(env.ReadKinBodyXMLFile(filename))
-#     env.Add(obs[-1])
-#     obs[-1].SetTransform(Tobj[i])
-#     print("aaa", i)
 
 for i in range(0,len(Tobj)):        # TODO: <=6 objs
         if IS_LARGE_OBS:
@@ -129,24 +96,16 @@ for i in range(0,len(Tobj)):        # TODO: <=6 objs
 
 # raw_input('press any key 3')
 
-        
 start_time = time.time()
-
-# robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
-# print(robot.GetActiveDOFValues())
 
 try:
     with robot:
         robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
-        # robot.SetDOFVelocities([0.0]*7,[3, 2, 4, 0, 1, 6, 5])
-        # # robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
-        # robot.SetActiveDOFValues([0.0]*7)
-        # robot.SetActiveDOFVelocities([0.0]*7)
         manipprob = interfaces.BaseManipulation(robot, maxvelmult=1.0) # create the interface for basic manipulation programs
         if IS_MOVE:
             res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, jitter=0.2, execute=True) # call motion planner
         else:
-            res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, execute=False) # call motion planner
+            res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, execute=True) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
     spec = res.GetConfigurationSpecification()
     # raw_input('press any key 4')
