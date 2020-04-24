@@ -9,17 +9,17 @@ import time
 from scipy.interpolate import interp1d
 import sys
 
-IS_MOVE = bool(int(sys.argv[1]))    # 0 reach, 1 move
+MODE = int(sys.argv[1])    # 0 reach, 1 move, 2 retract
 IS_LARGE_OBS = (len(sys.argv)>2) and bool(sys.argv[2]=="l")
 
-print("is move", IS_MOVE)
+print("mode", MODE)
 print("is large obstacles", IS_LARGE_OBS) 
 
 env = Environment()
 # env.SetViewer('qtcoin')
 urdf_module = RaveCreateModule(env, 'urdf')
 
-if IS_MOVE:
+if MODE == 1:
     urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_moving_BB.urdf"
 else:
     urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_reaching_BB.urdf"
@@ -35,7 +35,7 @@ BaseT = np.array([[1,0,0,baseT_translation[0]],
                 [0,0,0,1]])
 robot.SetTransform(BaseT)
 
-if IS_MOVE:
+if MODE == 1:
     table = env.ReadKinBodyXMLFile('tabletop_move.kinbody.xml')
     env.Add(table)      # TODO: moved table down 2 cm
 else:
@@ -49,7 +49,12 @@ RaveSetDebugLevel(DebugLevel.Debug) # set output level to debug
 
 #########################################################################################################################################
 # listen for file and open it when it appears
-file_path = '/data/PB_MOVE.npz' if IS_MOVE else '/data/PB_REACH.npz'
+if MODE == 0:
+    file_path = '/data/PB_REACH.npz'
+elif MODE == 1:
+    file_path = '/data/PB_MOVE.npz'
+else:
+    file_path = '/data/PB_RETRACT.npz'
 
 Qinit = [0.0]*7
 Qdestin = [0.0]*7
@@ -60,11 +65,13 @@ if os.path.isfile(file_path):
     try:
         loaded_data = np.load(file_path)
         OBJECTS = loaded_data['arr_0']
-        if IS_MOVE:
+        if MODE == 0:
+            Qdestin = loaded_data['arr_1']
+        elif MODE == 1:
             Qinit = loaded_data['arr_1']
             Qdestin = loaded_data['arr_2']
         else:
-            Qdestin = loaded_data['arr_1']
+            Qinit = loaded_data['arr_1']
         os.remove(file_path)
     except Exception:
         os.remove(file_path)
@@ -76,7 +83,7 @@ else:
 def get_transf_mat_from_pos_orient(xyz,theta):
     return np.array([[np.cos(theta),-np.sin(theta),0,xyz[0]],[np.sin(theta),np.cos(theta),0,xyz[1]],[0,0,1,xyz[2]],[0,0,0,1]])   
 Tobj = []
-start = 1 if IS_MOVE else 0
+start = 1 if MODE==1 else 0
 for i in range(start,OBJECTS.shape[0]):
     xyz = OBJECTS[i,0:3]
     theta = OBJECTS[i,-1]
@@ -102,10 +109,10 @@ try:
     with robot:
         robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
         manipprob = interfaces.BaseManipulation(robot, maxvelmult=1.0) # create the interface for basic manipulation programs
-        if IS_MOVE:
-            res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, jitter=0.2, execute=True) # call motion planner
+        if MODE != 0:   # start may be in collision, need jitter
+            res = manipprob.MoveManipulator(goal=Qdestin, outputtrajobj=True, jitter=0.2, execute=True) # call motion planner
         else:
-            res = manipprob.MoveManipulator(goal=Qdestin,outputtrajobj=True, execute=True) # call motion planner
+            res = manipprob.MoveManipulator(goal=Qdestin, outputtrajobj=True, execute=True) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
     spec = res.GetConfigurationSpecification()
     # raw_input('press any key 4')
@@ -140,7 +147,12 @@ else:
 #     print(Traj_S[test, :])
 #     print(T[test])
 
-save_path = '/data/OR_MOVE.npz' if IS_MOVE else '/data/OR_REACH.npz'
+if MODE == 0:
+    save_path = '/data/OR_REACH.npz'
+elif MODE == 1:
+    save_path = '/data/OR_MOVE.npz'
+else:
+    save_path = '/data/OR_RETRACT.npz'
 np.savez(save_path, Traj_I, Traj_S)
 #bp()
 

@@ -88,13 +88,13 @@
 <!--    openrave cannot visualize primitive shape e.g. box-->
     <visual>
       <geometry>
-        <mesh filename="package://inmoov_meshes/meshes/box-binary.stl" scale="0.07 0.07 0.2"/>
+        <mesh filename="package://inmoov_meshes/meshes/box-binary.stl" scale="0.06 0.06 0.2"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.03 -0.00 -0.18"/>
     </visual>
     <collision>
       <geometry>
-        <box size="0.07 0.07 0.2"/>
+        <box size="0.06 0.06 0.2"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.03 -0.00 -0.18"/>
     </collision>
