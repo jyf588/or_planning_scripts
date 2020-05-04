@@ -19,10 +19,12 @@ env = Environment()
 # env.SetViewer('qtcoin')
 urdf_module = RaveCreateModule(env, 'urdf')
 
-if MODE == 1:
-    urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_moving_BB.urdf"
-else:
+if MODE == 0:
     urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_reaching_BB.urdf"
+elif MODE == 1:
+    urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_moving_BB.urdf"
+elif MODE == 2:
+    urdf_path = "/data/or_planning_scripts/inmoov_arm_v2_2_retract_BB.urdf"
 
 srdf_path = "/data/or_planning_scripts/inmoov_shadow_hand_v2.srdf"
 np.set_printoptions(formatter={'int_kind': '{:,}'.format})
@@ -37,10 +39,10 @@ robot.SetTransform(BaseT)
 
 if MODE == 1:
     table = env.ReadKinBodyXMLFile('tabletop_move.kinbody.xml')
-    env.Add(table)      # TODO: moved table down 2 cm
+    env.Add(table)
 else:
     table = env.ReadKinBodyXMLFile('tabletop_reach.kinbody.xml')
-    env.Add(table)      # TODO: moved table down 2 cm, move -x 2cm
+    env.Add(table)      # move towards -x 4cm as clearance
 
 
 manip = robot.SetActiveManipulator('right_arm')
@@ -61,7 +63,7 @@ Qdestin = [0.0]*7
 while not os.path.exists(file_path):
     time.sleep(0.02)
 if os.path.isfile(file_path):
-    time.sleep(0.3)         # TODO: wait for networking
+    time.sleep(0.3)         # TODO: wait for file write
     try:
         loaded_data = np.load(file_path)
         OBJECTS = loaded_data['arr_0']
@@ -109,9 +111,11 @@ try:
     with robot:
         robot.SetDOFValues(Qinit[0:7],[3, 2, 4, 0, 1, 6, 5])
         manipprob = interfaces.BaseManipulation(robot, maxvelmult=1.0) # create the interface for basic manipulation programs
-        if MODE != 0:   # start may be in collision, need jitter
-            res = manipprob.MoveManipulator(goal=Qdestin, outputtrajobj=True, jitter=0.2, execute=True) # call motion planner
-        else:
+        if MODE == 2:   # start may be in collision, need jitter
+            res = manipprob.MoveManipulator(goal=Qdestin, outputtrajobj=True, jitter=0.25, execute=True) # call motion planner
+        elif MODE == 1:   # start may be in collision, need jitter
+            res = manipprob.MoveManipulator(goal=Qdestin, outputtrajobj=True, jitter=0.3, execute=True) # call motion planner
+        elif MODE == 0:
             res = manipprob.MoveManipulator(goal=Qdestin, outputtrajobj=True, execute=True) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
     spec = res.GetConfigurationSpecification()
@@ -126,7 +130,7 @@ if len(traj) == 0:
     Traj_I = np.array([])
     Traj_S = np.array([])
 else:
-    n = 400 #interpolated trajectory resolution
+    n = 300     #interpolated trajectory resolution
     t = np.cumsum(traj[:,-1])
     T = np.linspace(t[0],t[-1],n)
     Traj_I = np.zeros((n,traj.shape[1]-8))      # TODO
