@@ -52,7 +52,9 @@ else:
     table = env.ReadKinBodyXMLFile('tabletop_reach.kinbody.xml')
     env.Add(table)      # move towards -x 4cm as clearance
 
-
+if MODE == 0:
+    ceil = env.ReadKinBodyXMLFile('ceiling_reach.kinbody.xml')
+    env.Add(ceil)
 
 manip = robot.SetActiveManipulator("right_arm")
 # print(manip.GetArmIndices()) # [ 3  2  4  0  1 6 5] out of 7
@@ -76,13 +78,8 @@ if os.path.isfile(file_path):
     try:
         loaded_data = np.load(file_path)
         OBJECTS = loaded_data["arr_0"]
-        if MODE == 0:
-            Qdestin = loaded_data["arr_1"]
-        elif MODE == 1:
-            Qinit = loaded_data["arr_1"]
-            Qdestin = loaded_data["arr_2"]
-        else:
-            Qinit = loaded_data["arr_1"]
+        Qinit = loaded_data["arr_1"]
+        Qdestin = loaded_data["arr_2"]
         os.remove(file_path)
     except Exception:
         os.remove(file_path)
@@ -133,17 +130,13 @@ try:
         manipprob = interfaces.BaseManipulation(
             robot, maxvelmult=1.0
         ) # create the interface for basic manipulation programs
-        if MODE == 2:   # start may be in collision, need jitter
+        if MODE == 2 or MODE == 0:   # start may be in collision, need jitter
             res = manipprob.MoveManipulator(
                 goal=Qdestin, outputtrajobj=True, jitter=0.25, execute=True
             ) # call motion planner
-        elif MODE == 1:   # start may be in collision, need jitter
+        elif MODE == 1:   # start may be in collision, need jitter, transport Bounding Box larger
             res = manipprob.MoveManipulator(
                 goal=Qdestin, outputtrajobj=True, jitter=0.3, execute=True
-            ) # call motion planner
-        elif MODE == 0:
-            res = manipprob.MoveManipulator(
-                goal=Qdestin, outputtrajobj=True, execute=True
             ) # call motion planner
     traj = res.GetAllWaypoints2D()[:,0:-1]
 
@@ -159,7 +152,7 @@ if len(traj) == 0:
     Traj_I = np.array([])
     Traj_S = np.array([])
 else:
-    n = 300     #interpolated trajectory resolution
+    n = 300 if MODE != 1 else 500     #interpolated trajectory resolution
     t = np.cumsum(traj[:, -1])
     T = np.linspace(t[0], t[-1], n)
     Traj_I = np.zeros((n, traj.shape[1] - 8))  # TODO
