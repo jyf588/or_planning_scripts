@@ -56,6 +56,9 @@ if MODE == 0:
     ceil = env.ReadKinBodyXMLFile('ceiling_reach.kinbody.xml')
     env.Add(ceil)
 
+torso = env.ReadKinBodyXMLFile('torso.kinbody.xml')
+env.Add(torso)
+
 manip = robot.SetActiveManipulator("right_arm")
 # print(manip.GetArmIndices()) # [ 3  2  4  0  1 6 5] out of 7
 RaveSetDebugLevel(DebugLevel.Debug)  # set output level to debug
@@ -152,7 +155,13 @@ if len(traj) == 0:
     Traj_I = np.array([])
     Traj_S = np.array([])
 else:
-    n = 300 if MODE != 1 else 500     #interpolated trajectory resolution
+    #interpolated trajectory resolution
+    if MODE == 0:
+        n = 400
+    elif MODE == 1:
+        n = 500
+    elif MODE == 2:
+        n = 300  
     t = np.cumsum(traj[:, -1])
     T = np.linspace(t[0], t[-1], n)
     Traj_I = np.zeros((n, traj.shape[1] - 8))  # TODO

@@ -1,0 +1,9 @@
+<KinBody name="torso">
+  <Body name="base">
+    <Geom type="box">
+      <extents>0.1 0.1 1.0</extents>
+      <translation>-0.3 0.45 0.0</translation>
+      <diffusecolor>0.6 0 0</diffusecolor>
+    </Geom>
+  </Body>
+</KinBody>
