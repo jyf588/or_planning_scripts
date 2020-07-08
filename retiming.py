@@ -17,7 +17,8 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 mode = p.DIRECT  # or p.DIRECT without GUI
 p.connect(mode)
 p.resetSimulation()
-p.setTimeStep(1. / 240)
+TimeStep = 1. / 240
+p.setTimeStep(TimeStep)
 arm_dofs = [0, 1, 2, 3, 4, 6, 7]
 maxForce = 200.
 arm_id = p.loadURDF(os.path.join(currentdir, 'inmoov_arm_v2_2_reaching_BB.urdf'), [-0.30, 0.348, 0.272],
@@ -28,7 +29,7 @@ def dist_func(a, b, c, t):
     return a * t ** 3 + b * t ** 2 + c * t
 
 
-def retimed_traj(Traj, v0=0, v1=0):
+def retimed_traj(Traj, dq0=7 * [0], v1=0):
     """
     :param Traj: Original trajectory computed by OpenRAVE of shape (T, 7)
     :param v0: Magnitude of initial velocity
@@ -36,42 +37,44 @@ def retimed_traj(Traj, v0=0, v1=0):
     :return: Retimed trajectory of shape (T, 7). The magnitude of velocity satisfies quadratic functions.
     """
     # d(t) = at^3 + bt^2 + ct
-    # d(0) = 0, d(1) = a + b + c = dist, d'(0) = c = v0, d'(1) = 3a + 2b + c = v1
-    # a = v0 + v1 - 2dist, b = 3dist - 2v0 - v1, c = v0
+    # d(0) = 0, d(T) = aT^3 + bT^2 + cT = dist, d'(0) = c = v0, d'(T) = 3aT^2 + 2bT + c = v1
+    # a = (v0 + v1)/T^2 - 2dist/T^3, b = 3*dist/T^2 - 2v0/T - v1/T, c = v0
+    Traj = Traj[:, 0:7]
     dist_list = [0]  # distance at each timestep
-    tar_armq = Traj[0, 0:7]  # TODO: initial Q?
-    p.setJointMotorControlArray(
-        bodyIndex=arm_id,
-        jointIndices=arm_dofs,
-        controlMode=p.POSITION_CONTROL,
-        targetPositions=list(tar_armq))  # TODO: no max force, guarantee for target q?
+    ini_armq = Traj[0]  # TODO: initial Q?
+    p.resetJointState(arm_id, arm_dofs, ini_armq, dq0)
     p.stepSimulation()
-    hand_pos, hand_quat, *_ = p.getLinkState(arm_id, 7, computeForwardKinematics=1)
+    hand_pos, _, _, _, _, _, v0, _ = p.getLinkState(arm_id, 7, computeLinkVelocity=1, computeForwardKinematics=1)
+    v0 = np.linalg.norm(v0)
+    last_tar_arm_q = ini_armq
     for ind in range(1, len(Traj)):
-        tar_armq = Traj[ind, 0:7]
+        tar_armq = Traj[ind]
+        tar_arm_vel = (tar_armq - last_tar_arm_q) / TimeStep
         p.setJointMotorControlArray(
             bodyIndex=arm_id,
             jointIndices=arm_dofs,
             controlMode=p.POSITION_CONTROL,
             targetPositions=list(tar_armq),
-            forces=[maxForce * 3] * len(arm_dofs))
+            targetVelocities=list(tar_arm_vel),
+            forces=[maxForce * 5] * len(arm_dofs))  # TODO: to be determined
         p.stepSimulation()
         hand_pos_prime, hand_quat_prime, *_ = p.getLinkState(arm_id, 7, computeForwardKinematics=1)
         dist_list.append(np.linalg.norm(np.array(hand_pos_prime) - np.array(hand_pos)))
         hand_pos = hand_pos_prime
+        last_tar_arm_q = tar_armq
     dist = np.cumsum(np.array(dist_list))
-    a = v0 + v1 - 2 * dist[-1]
-    b = 3 * dist[-1] - 2 * v0 - v1
+    T = len(Traj) * TimeStep
+    a = (v0 + v1) / (T ** 2) - 2 * dist[-1] / (T ** 3)
+    b = 3 * dist[-1] / (T ** 2) - (2 * v0 + v1) / T
     c = v0
-    T = np.arange(len(Traj)) / len(Traj)  # TODO: t_start = 0, t_end = 1?
     retimed_traj = np.zeros((Traj.shape[0], 7))
-    retimed_traj[0] = Traj[0, 0:7]
+    retimed_traj[0] = Traj[0]
     for t in range(1, len(Traj)):
-        ts = t / len(Traj)
+        ts = t * TimeStep
         dist_targ = dist_func(a, b, c, ts)
         idx = np.searchsorted(dist, dist_targ)
         dist0 = dist[idx - 1]
         dist1 = dist[idx]
         ppt = (dist_targ - dist0) / (dist1 - dist0)
-        retimed_traj[t] = Traj[idx - 1, 0:7] + ppt * (Traj[idx, 0:7] - Traj[idx - 1, 0:7])
+        retimed_traj[t] = Traj[idx - 1] + ppt * (Traj[idx] - Traj[idx - 1])
     return retimed_traj
